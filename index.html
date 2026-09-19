@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Lista del Súper</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f7f9fc; color: #333; }
+        .container { max-width: 650px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
+        
+        /* Formulario */
+        .form-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        button { padding: 10px 15px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        .btn-add { background-color: #2ecc71; color: white; }
+        .btn-add:hover { background-color: #27ae60; }
+        .btn-reset { background-color: #e74c3c; color: white; width: 100%; margin-top: 20px; font-size: 16px; padding: 12px; }
+        .btn-reset:hover { background-color: #c0392b; }
+        
+        /* Tabla */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background-color: #f8f9fa; color: #555; }
+        tr.comprado { background-color: #f1f2f6; text-decoration: line-through; color: #a4b0be; }
+        .checkbox-cell, .action-cell { text-align: center; width: 50px; }
+        input[type="checkbox"] { transform: scale(1.2); cursor: pointer; }
+        
+        /* Botón eliminar individual */
+        .btn-delete { background: none; border: none; color: #e74c3c; font-size: 16px; cursor: pointer; padding: 5px; }
+        .btn-delete:hover { color: #c0392b; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🛒 Lista Inteligente del Súper</h2>
+    
+    <!-- Formulario -->
+    <div class="form-group">
+        <input type="text" id="producto" placeholder="¿Qué falta? (ej: Leche)" required>
+        <input type="text" id="tienda" placeholder="¿En qué tienda? (ej: Walmart)">
+        <input type="number" id="cantidad" placeholder="Cantidad" min="1" value="1">
+        <button class="btn-add" onclick="agregarArticulo()">Añadir</button>
+    </div>
+
+    <!-- Tabla -->
+    <table>
+        <thead>
+            <tr>
+                <th class="checkbox-cell">✓</th>
+                <th>Producto</th>
+                <th>Tienda</th>
+                <th>Cantidad</th>
+                <th class="action-cell">Quitar</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+            <!-- Los artículos se generarán aquí dinámicamente -->
+        </tbody>
+    </table>
+
+    <!-- Botón de Reset general -->
+    <button class="btn-reset" onclick="resetearLista()">Reiniciar Lista (Borrar Todo)</button>
+</div>
+
+<script>
+    let listaSuper = JSON.parse(localStorage.getItem('listaSuper')) || [];
+
+    function renderizarLista() {
+        const tabla = document.getElementById('cuerpoTabla');
+        tabla.innerHTML = '';
+        
+        listaSuper.forEach((articulo, index) => {
+            const fila = document.createElement('tr');
+            if (articulo.comprado) fila.classList.add('comprado');
+
+            fila.innerHTML = `
+                <td class="checkbox-cell">
+                    <input type="checkbox" ${articulo.comprado ? 'checked' : ''} onclick="alternarComprado(${index})">
+                </td>
+                <td>${articulo.producto}</td>
+                <td>${articulo.tienda || '-'}</td>
+                <td>${articulo.cantidad}</td>
+                <td class="action-cell">
+                    <button class="btn-delete" onclick="eliminarArticulo(${index})" title="Eliminar producto">❌</button>
+                </td>
+            `;
+            tabla.appendChild(fila);
+        });
+        
+        localStorage.setItem('listaSuper', JSON.stringify(listaSuper));
+    }
+
+    function agregarArticulo() {
+        const prodInput = document.getElementById('producto');
+        const tiendaInput = document.getElementById('tienda');
+        const cantInput = document.getElementById('cantidad');
+
+        if (prodInput.value.trim() === '') {
+            alert('Por favor, escribe el nombre del producto.');
+            return;
+        }
+
+        const nuevoArticulo = {
+            producto: prodInput.value.trim(),
+            tienda: tiendaInput.value.trim(),
+            cantidad: parseInt(cantInput.value) || 1,
+            comprado: false
+        };
+
+        listaSuper.push(nuevoArticulo);
+        renderizarLista();
+
+        // Limpiar formulario
+        prodInput.value = '';
+        tiendaInput.value = '';
+        cantInput.value = '1';
+        prodInput.focus();
+    }
+
+    function alternarComprado(index) {
+        listaSuper[index].comprado = !listaSuper[index].comprado;
+        renderizarLista();
+    }
+
+    // Nueva función para borrar un solo artículo
+    function eliminarArticulo(index) {
+        listaSuper.splice(index, 1);
+        renderizarLista();
+    }
+
+    function resetearLista() {
+        if (confirm('¿Seguro que quieres borrar por completo la lista actual?')) {
+            listaSuper = [];
+            renderizarLista();
+        }
+    }
+
+    renderizarLista();
+</script>
+
+</body>
+</html>
